@@ -18,25 +18,29 @@ let readFields (rs: ADODB.Recordset) =
   let dict = Dictionary<string, ADODB.Field>()
 
   rs.Fields 
-      |> Seq.cast<ADODB.Field> 
-      |> Seq.iter (fun f -> dict.[f.Name] <- f)
+  |> Seq.cast<ADODB.Field> 
+  |> Seq.iter (fun f -> dict.[f.Name] <- f)
 
   dict
 
 let saveRecordset (rs: ADODB.Recordset) (fn: string) =
   rs.Save(fn, ADODB.PersistFormatEnum.adPersistADTG)
-  
-let getRows (rs: ADODB.Recordset) =
+
+let getIndexedRecordset (rs: ADODB.Recordset) =
   // if recordset is empty
-  if (rs.BOF && rs.EOF) then Seq.empty<ADODB.Recordset> else 
-  
-  // move to very beginning of the recordset
-  rs.MoveFirst()
-  rs.MovePrevious()
-  
-  Seq.unfold (fun (r: ADODB.Recordset) -> 
-                r.MoveNext()
-                if r.EOF then None else Some(r, r)) rs
+  if (rs.BOF && rs.EOF) then Seq.empty<ADODB.Recordset*int> else 
+  // else get indexed recordset
+  Seq.map (fun i ->  (rs, i)) [1 .. rs.RecordCount]
+
+let getValue (rs: ADODB.Recordset, i) key =
+  let pos = int rs.AbsolutePosition
+  rs.Move(i - pos)
+  rs.Fields.[key].Value
+
+let setValue (rs: ADODB.Recordset, i) key value =
+  let pos = int rs.AbsolutePosition
+  rs.Move(i - pos)
+  rs.Fields.[key].Value <- value
 
 let mapAdoType = function
   | ADODB.DataTypeEnum.adBoolean -> Some typeof<System.Boolean>

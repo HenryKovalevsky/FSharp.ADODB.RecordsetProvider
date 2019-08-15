@@ -18,16 +18,16 @@ type RecordsetProvider() as this =
   inherit TypeProviderForNamespaces()
 
   let buildGetterExpr key =
-    fun [rs] -> <@@ (((%%rs: obj) :?> ADODB.Recordset).Fields.[key].Value) @@>
+    fun [rs] -> <@@ Recordsets.getValue ((%%rs: obj) :?> ADODB.Recordset*int) key @@>
 
   let buildSetterExpr key =
-    fun [rs; newval] -> <@@ (((%%rs:obj) :?> ADODB.Recordset).Fields.[key].Value <- %%(Expr.Coerce(newval, typeof<obj>))) @@>
+    fun [rs; newval] -> <@@ Recordsets.setValue ((%%rs: obj) :?> ADODB.Recordset*int) key %%(Expr.Coerce(newval, typeof<obj>)) @@>
 
   let buildGuidGetterExpr key =
-    fun [rs] -> <@@ (((%%rs: obj) :?> ADODB.Recordset).Fields.[key].Value :?> System.String |> System.Guid.Parse) @@>
+    fun [rs] -> <@@ Recordsets.getValue ((%%rs: obj) :?> ADODB.Recordset*int) key :?> System.String |> System.Guid.Parse @@>
 
   let buildGuidSetterExpr key =
-    fun [rs; newval] -> <@@ (((%%rs: obj) :?> ADODB.Recordset).Fields.[key].Value <- (%%(Expr.Coerce(newval, typeof<System.Guid>)): System.Guid).ToString("B")) @@>
+    fun [rs; newval] -> <@@ Recordsets.setValue ((%%rs: obj) :?> ADODB.Recordset*int) key ((%%(Expr.Coerce(newval, typeof<System.Guid>)): System.Guid).ToString("B")) @@>
 
   let ns = "FSharp.ADODB.RecordsetProvider"
   let asm = Assembly.GetExecutingAssembly()
@@ -47,7 +47,7 @@ type RecordsetProvider() as this =
           |> addDelayedXmlComment "Open recordset from a file."
           |> ty.AddMember
 
-          let rowTy = ProvidedTypeDefinition("Row", Some(typeof<obj>))
+          let recordTy = ProvidedTypeDefinition("Record", Some(typeof<obj>))
           
           fileName 
           |> Recordsets.openRecordset
@@ -64,30 +64,30 @@ type RecordsetProvider() as this =
                                                       |> addDelayedXmlComment (string adoType)
                                               | _ -> 
                                                       i.Key
-                                                      |> makeProvidedProperty typeof<System.Object> (buildGetterExpr i.Key) (buildSetterExpr i.Key)
+                                                      |> makeProvidedProperty typeof<obj> (buildGetterExpr i.Key) (buildSetterExpr i.Key)
                                                       |> addDelayedXmlComment "Unknown type." 
                                 )
           |> Seq.toList
-          |> rowTy.AddMembers
+          |> recordTy.AddMembers
          
           "Fields"
           |> makeReadOnlyProvidedProperty (typedefof<seq<_>>.MakeGenericType(typeof<ADODB.Field>)) (fun [rs] -> <@@ Seq.cast<ADODB.Field> ((%%rs: obj) :?> ADODB.Recordset).Fields @@>)
           |> addDelayedXmlComment "Sequence of recordset fields."
           |> ty.AddMember
 
-          "Rows"
-          |> makeReadOnlyProvidedProperty (typedefof<seq<_>>.MakeGenericType(rowTy)) (fun [rs] -> <@@ Recordsets.getRows ((%%rs: obj) :?> ADODB.Recordset) @@>)
-          |> addDelayedXmlComment "Sequence of data rows."
+          "Records"
+          |> makeReadOnlyProvidedProperty (typedefof<seq<_>>.MakeGenericType(recordTy)) (fun [rs] -> <@@ Recordsets.getIndexedRecordset ((%%rs: obj) :?> ADODB.Recordset) @@>)
+          |> addDelayedXmlComment "Sequence of data records."
           |> ty.AddMember
 
           "Save"
           |> makeProvidedMethod<unit>
                []
-               (fun [rs] -> <@@ Recordsets.saveRecordset ((%%rs:obj) :?> ADODB.Recordset) fileName @@>)
+               (fun [rs] -> <@@ Recordsets.saveRecordset ((%%rs: obj) :?> ADODB.Recordset) fileName @@>)
           |> addDelayedXmlComment "Save recordset."
           |> ty.AddMember
 
-          rowTy
+          recordTy
           |> ty.AddMember
 
           ty
