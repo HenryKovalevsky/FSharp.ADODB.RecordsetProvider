@@ -26,21 +26,25 @@ let readFields (rs: ADODB.Recordset) =
 let saveRecordset (rs: ADODB.Recordset) (fn: string) =
   rs.Save(fn, ADODB.PersistFormatEnum.adPersistADTG)
 
-let getIndexedRecordset (rs: ADODB.Recordset) =
-  // if recordset is empty
-  if (rs.BOF && rs.EOF) then Seq.empty<ADODB.Recordset*int> else 
-  // else get indexed recordset
-  Seq.map (fun i ->  (rs, i)) [1 .. rs.RecordCount]
-
-let getValue (rs: ADODB.Recordset, i) key =
+let move (rs: ADODB.Recordset) i =
   let pos = int rs.AbsolutePosition
   rs.Move(i - pos)
+
+  rs
+
+let getValue (rs: ADODB.Recordset) key =
   rs.Fields.[key].Value
 
-let setValue (rs: ADODB.Recordset, i) key value =
-  let pos = int rs.AbsolutePosition
-  rs.Move(i - pos)
+let setValue (rs: ADODB.Recordset) key value =
   rs.Fields.[key].Value <- value
+
+let initRecordsetAccessor (rs: ADODB.Recordset) =
+  // if recordset is empty
+  if (rs.BOF && rs.EOF) then Seq.empty<unit->ADODB.Recordset> else 
+  // else init recordset accessor sequence
+  let move' rs i () = move rs i
+  Seq.map (fun i ->  move' rs i) [1 .. rs.RecordCount]
+
 
 let mapAdoType = function
   | ADODB.DataTypeEnum.adBoolean -> Some typeof<System.Boolean>

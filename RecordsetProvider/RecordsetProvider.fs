@@ -17,17 +17,20 @@ open ProviderImplementation.ProvidedTypes
 type RecordsetProvider() as this =
   inherit TypeProviderForNamespaces()
 
+  let getRecordsetExpr rs =
+    <@@ ((%%rs: obj) :?> (unit->ADODB.Recordset))() @@>
+
   let buildGetterExpr key =
-    fun [rs] -> <@@ Recordsets.getValue ((%%rs: obj) :?> ADODB.Recordset*int) key @@>
+    fun [rsa] -> <@@ Recordsets.getValue %%(getRecordsetExpr rsa) key @@>
 
   let buildSetterExpr key =
-    fun [rs; newval] -> <@@ Recordsets.setValue ((%%rs: obj) :?> ADODB.Recordset*int) key %%(Expr.Coerce(newval, typeof<obj>)) @@>
+    fun [rsa; newval] -> <@@ Recordsets.setValue %%(getRecordsetExpr rsa) key %%(Expr.Coerce(newval, typeof<obj>)) @@>
 
   let buildGuidGetterExpr key =
-    fun [rs] -> <@@ Recordsets.getValue ((%%rs: obj) :?> ADODB.Recordset*int) key :?> System.String |> System.Guid.Parse @@>
+    fun [rsa] -> <@@ Recordsets.getValue %%(getRecordsetExpr rsa) key :?> string |> Guid.Parse @@>
 
   let buildGuidSetterExpr key =
-    fun [rs; newval] -> <@@ Recordsets.setValue ((%%rs: obj) :?> ADODB.Recordset*int) key ((%%(Expr.Coerce(newval, typeof<System.Guid>)): System.Guid).ToString("B")) @@>
+    fun [rsa; newval] -> <@@ Recordsets.setValue %%(getRecordsetExpr rsa) key ((%%newval: Guid).ToString("B")) @@>
 
   let ns = "FSharp.ADODB.RecordsetProvider"
   let asm = Assembly.GetExecutingAssembly()
@@ -76,7 +79,7 @@ type RecordsetProvider() as this =
           |> ty.AddMember
 
           "Records"
-          |> makeReadOnlyProvidedProperty (typedefof<seq<_>>.MakeGenericType(recordTy)) (fun [rs] -> <@@ Recordsets.getIndexedRecordset ((%%rs: obj) :?> ADODB.Recordset) @@>)
+          |> makeReadOnlyProvidedProperty (typedefof<seq<_>>.MakeGenericType(recordTy)) (fun [rs] -> <@@ Recordsets.initRecordsetAccessor ((%%rs: obj) :?> ADODB.Recordset) @@>)
           |> addDelayedXmlComment "Sequence of data records."
           |> ty.AddMember
 
