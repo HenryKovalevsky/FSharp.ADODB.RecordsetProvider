@@ -29,6 +29,10 @@ TestResult.xml
 [Rr]eleasePS/
 dlldata.c
 
+# ionide
+
+.ionide
+
 *_i.c
 *_p.c
 *_i.h

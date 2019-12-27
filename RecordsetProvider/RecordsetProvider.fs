@@ -2,6 +2,7 @@
 
 open System
 open System.Reflection
+open System.Collections.Generic
 
 open Microsoft.FSharp.Core.CompilerServices
 open Microsoft.FSharp.Quotations
@@ -32,6 +33,21 @@ type RecordsetProvider() as this =
   let buildGuidSetterExpr key =
     fun [rsa; newval] -> <@@ Recordsets.setValue %%(getRecordsetExpr rsa) key ((%%newval: Guid).ToString("B")) @@>
 
+  let mapFields (i : KeyValuePair<string, ADODB.Field>) = 
+    match Recordsets.mapAdoType i.Value.Type with
+    | _ when i.Value.Type = ADODB.DataTypeEnum.adGUID ->
+        i.Key
+        |> makeProvidedProperty typeof<Guid> (buildGuidGetterExpr i.Key) (buildGuidSetterExpr i.Key)
+        |> addDelayedXmlComment (string ADODB.DataTypeEnum.adGUID)
+    | Some dataType ->
+        i.Key
+        |> makeProvidedProperty dataType (buildGetterExpr i.Key) (buildSetterExpr i.Key)
+        |> addDelayedXmlComment (string i.Value.Type)
+    | None -> 
+        i.Key
+        |> makeProvidedProperty typeof<obj> (buildGetterExpr i.Key) (buildSetterExpr i.Key)
+        |> addDelayedXmlComment "Unknown type." 
+
   let ns = "FSharp.ADODB.RecordsetProvider"
   let asm = Assembly.GetExecutingAssembly()
 
@@ -55,21 +71,7 @@ type RecordsetProvider() as this =
           fileName 
           |> Recordsets.openRecordset
           |> Recordsets.readFields
-          |> Seq.map (fun i -> match i.Value.Type with
-                                | ADODB.DataTypeEnum.adGUID ->
-                                        i.Key
-                                        |> makeProvidedProperty typeof<Guid> (buildGuidGetterExpr i.Key) (buildGuidSetterExpr i.Key)
-                                        |> addDelayedXmlComment (string ADODB.DataTypeEnum.adGUID)
-                                | adoType -> match Recordsets.mapAdoType adoType with
-                                              | Some dataType ->
-                                                      i.Key
-                                                      |> makeProvidedProperty dataType (buildGetterExpr i.Key) (buildSetterExpr i.Key)
-                                                      |> addDelayedXmlComment (string adoType)
-                                              | _ -> 
-                                                      i.Key
-                                                      |> makeProvidedProperty typeof<obj> (buildGetterExpr i.Key) (buildSetterExpr i.Key)
-                                                      |> addDelayedXmlComment "Unknown type." 
-                                )
+          |> Seq.map mapFields
           |> Seq.toList
           |> recordTy.AddMembers
          

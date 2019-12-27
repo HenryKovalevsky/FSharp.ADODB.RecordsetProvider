@@ -45,7 +45,6 @@ let initRecordsetAccessor (rs: ADODB.Recordset) =
   let move' rs i () = move rs i
   Seq.map (fun i ->  move' rs i) [1 .. rs.RecordCount]
 
-
 let mapAdoType = function
   | ADODB.DataTypeEnum.adBoolean -> Some typeof<System.Boolean>
   | ADODB.DataTypeEnum.adUnsignedTinyInt -> Some typeof<System.Byte>
@@ -67,4 +66,3 @@ let mapAdoType = function
   | ADODB.DataTypeEnum.adVarWChar -> Some typeof<System.String>
   | ADODB.DataTypeEnum.adLongVarBinary -> Some typeof<System.Byte[]>
   | _ -> None
-
