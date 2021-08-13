@@ -1,7 +1,7 @@
-﻿#r @"bin\Debug\FSharp.ADODB.RecordsetTypeProvider.dll"
+﻿#r @"..\src\RecordsetProvider.DesignTime\bin\Debug\FSharp.ADODB.RecordsetTypeProvider.dll"
 #r "ADODB"
 
-let [<Literal>] FileName = __SOURCE_DIRECTORY__ + @"\..\Data\recordset.rst" 
+let [<Literal>] FileName = __SOURCE_DIRECTORY__ + @"\recordset.rst" 
 
 open FSharp.ADODB.RecordsetProvider
 

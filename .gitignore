@@ -58,6 +58,10 @@ dlldata.c
 *.svclog
 *.scc
 
+# Paket dependency manager
+.paket/paket.exe
+paket-files/
+
 # Chutzpah Test files
 _Chutzpah*
 
