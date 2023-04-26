@@ -1,5 +1,5 @@
 ﻿#r @"..\src\RecordsetProvider.DesignTime\bin\Debug\FSharp.ADODB.RecordsetTypeProvider.dll"
-#r "ADODB"
+#r "nuget: ADODB"
 
 let [<Literal>] FileName = __SOURCE_DIRECTORY__ + @"\recordset.rst" 
 

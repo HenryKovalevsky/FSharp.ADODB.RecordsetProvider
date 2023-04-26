@@ -25,8 +25,8 @@ module ProvidedTypesHelpers =
   let inline makeProvidedMethod<'T> parameters invokeCode methodName =
     ProvidedMethod(methodName, parameters, typeof<'T>, invokeCode)
 
-  let inline makeProvidedParameter< ^T> paramName =
-    ProvidedParameter(paramName, typeof< ^T>)
+  let inline makeProvidedParameter<^T> paramName =
+    ProvidedParameter(paramName, typeof<^T>)
 
   let inline addDelayedXmlComment comment providedMember =
     (^a : (member AddXmlDocDelayed : (unit -> string) -> unit) providedMember, (fun () -> comment))

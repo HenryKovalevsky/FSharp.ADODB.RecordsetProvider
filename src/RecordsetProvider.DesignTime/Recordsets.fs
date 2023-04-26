@@ -24,17 +24,19 @@ let private mapAdoTypeToNetType = function
   // todo: extend mapping.
   | _                                     ->   typeof<System.Object>   
 
+module ADODB =
+  type DataType = string
+
 type Field =
   { Name: string
     Type: System.Type
-    /// ADODB.DataType
-    DataType: string }
+    DataType: ADODB.DataType }
 
 type IRecord = 
   abstract member Item : string -> obj with get, set
   abstract member GetField : string -> Field 
 
-type Recordset(fileName) =
+type Recordset(fileName : string) =
   let recordset : ADODB.Recordset = upcast new ADODB.RecordsetClass()
   
   do recordset.Open(

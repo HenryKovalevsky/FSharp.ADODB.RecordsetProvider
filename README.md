@@ -4,7 +4,7 @@ The simple F# type provider for an ADO (ActiveX Data Objects) recordset stored i
 
 ## Prerequisites
 
-- [.NET Framework 4.7.2](https://dotnet.microsoft.com/download/visual-studio-sdks);
+- [.NET Framework 4.8](https://dotnet.microsoft.com/download/visual-studio-sdks);
 - [Paket](https://fsprojects.github.io/Paket/) to manage dependencies.
 
 ## Usage
